@@ -6,6 +6,10 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 const mongoose = require('mongoose');
+const dns = require('dns');
+const bodyParser = require('body-parser');
+const url = require('url');
+
 
 // Basic Configuration
 const port = process.env.PORT || 3000;
@@ -15,6 +19,8 @@ mongoose.connect(process.env.MONGO_URI, {useNewUrlParser: true, useUnifiedTopolo
 app.use(cors());
 
 app.use('/public', express.static(`${process.cwd()}/public`));
+
+app.use(bodyParser.urlencoded({extended: false}));
 
 app.get('/', function(req, res) {
   res.sendFile(process.cwd() + '/views/index.html');
@@ -26,7 +32,20 @@ app.get('/api/hello', function(req, res) {
 });
 
 app.post("/api/shorturl", function(req, res){
-  res.json({"original_url": "www.example.com", "short_url": "examp.le"});
+  try{
+    const userUrl = new URL(req.body.url);
+
+    dns.lookup(userUrl.host, function(err, address){
+      if(err) {
+        res.json({"error": "Not a valid url"});
+        return console.error(err);
+      }
+      else res.json({"original_url": userUrl.href, "short_url": "examp.le"});
+    });
+  } catch(e){
+    res.json({"error": "Not a valid url format"});
+    console.log(e);
+  }
 });
 
 app.listen(port, function() {
