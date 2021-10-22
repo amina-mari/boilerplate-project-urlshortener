@@ -9,12 +9,55 @@ const mongoose = require('mongoose');
 const dns = require('dns');
 const bodyParser = require('body-parser');
 const url = require('url');
+const {Schema} = mongoose;
 
+/* ********** Database configuration ********** */
+
+mongoose.connect(process.env.MONGO_URI, {useNewUrlParser: true, useUnifiedTopology: true});
+
+const urlSchema = new Schema({
+  url: String,
+  shortUrlNumber: Number
+})
+const Url = mongoose.model('Url', urlSchema);
+
+function findUrl(urlHref, done){
+  Url.find({url: urlHref}, function(err, data){
+    if(err) return console.error(err);
+    else done(null, data);
+  });
+}
+
+function findUrlByNumber(urlNumber, done){
+  Url.find({shortUrlNumber: urlNumber}, function(err, data){
+    if(err) return console.error(err);
+    else done(null, data);
+  })
+}
+
+function findHighestNumber(done){
+  Url.find({})
+  .sort({shortUrlNumber: -1})
+  .limit(1)
+  .exec(function(err, shortUrlNumber){
+    if(err) return console.error(err);
+    else done(null, shortUrlNumber);
+  });
+}
+
+function saveUrl(urlHref, num, done){
+  const newUrl = new Url({
+    url: urlHref,
+    shortUrlNumber: num
+  });
+  newUrl.save(function(err, url){
+    if(err) return console.error(err);
+    else done(null, url);
+  });
+}
 
 // Basic Configuration
 const port = process.env.PORT || 3000;
-
-mongoose.connect(process.env.MONGO_URI, {useNewUrlParser: true, useUnifiedTopology: true});
 
 app.use(cors());
 
@@ -43,7 +86,7 @@ app.post("/api/shorturl", function(req, res){
       else res.json({"original_url": userUrl.href, "short_url": "examp.le"});
     });
   } catch(e){
-    res.json({"error": "Not a valid url format"});
+    res.json({"error": "invalid url"});
     console.log(e);
   }
 });
