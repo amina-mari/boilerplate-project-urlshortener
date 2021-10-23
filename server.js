@@ -78,25 +78,30 @@ app.post("/api/shorturl", function(req, res){
   try{
     const userUrl = new URL(req.body.url);
 
-    dns.lookup(userUrl.host, function(err, address){
-      if(err) {
-        res.json({"error": "Not a valid url"});
-        return console.error(err);
-      }
-      else {
-        findHighestNumber(function(err, urlHighest){
-          if(err) return console.error(err);
-          else {
-            const userUrlNumber = urlHighest[0].shortUrlNumber + 1;
-
-            saveUrl(userUrl.href, userUrlNumber, function(err, urlToSave){
-              if(err) return console.error(err);
-              else res.json({"original_url": urlToSave.url, "short_url": urlToSave.shortUrlNumber});
-            })
-          }
-        })
-      }
-    });
+    if(userUrl.protocol != "https:" || userUrl.protocol != "http:"){
+      res.json({"error": "invalid url"});
+    }
+    else {
+      dns.lookup(userUrl.host, function(err, address){
+        if(err) {
+          res.json({"error": "Not a valid url"});
+          return console.error(err);
+        }
+        else {
+          findHighestNumber(function(err, urlHighest){
+            if(err) return console.error(err);
+            else {
+              const userUrlNumber = urlHighest[0].shortUrlNumber + 1;
+  
+              saveUrl(userUrl.href, userUrlNumber, function(err, urlToSave){
+                if(err) return console.error(err);
+                else res.json({"original_url": urlToSave.url, "short_url": urlToSave.shortUrlNumber});
+              })
+            }
+          })
+        }
+      });
+    }
   } catch(e){
     res.json({"error": "invalid url"});
     console.log(e);
