@@ -83,7 +83,19 @@ app.post("/api/shorturl", function(req, res){
         res.json({"error": "Not a valid url"});
         return console.error(err);
       }
-      else res.json({"original_url": userUrl.href, "short_url": "examp.le"});
+      else {
+        findHighestNumber(function(err, urlHighest){
+          if(err) return console.error(err);
+          else {
+            const userUrlNumber = urlHighest[0].shortUrlNumber + 1;
+
+            saveUrl(userUrl.href, userUrlNumber, function(err, urlToSave){
+              if(err) return console.error(err);
+              else res.json({"original_url": urlToSave.url, "short_url": urlToSave.shortUrlNumber});
+            })
+          }
+        })
+      }
     });
   } catch(e){
     res.json({"error": "invalid url"});
