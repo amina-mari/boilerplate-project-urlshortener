@@ -103,6 +103,20 @@ app.post("/api/shorturl", function(req, res){
   }
 });
 
+app.get('/api/shorturl/:number', function(req, res){
+    findUrlByNumber(req.params.number, function(err, url){
+      if(err) return console.error(err);
+      else {
+        try{
+          res.redirect(url[0].url);
+        } catch(e){
+          res.json({"error": "Can't find the url"});
+          console.error(e);
+        }
+      }
+    })
+});
+
 app.listen(port, function() {
   console.log(`Listening on port ${port}`);
 });
